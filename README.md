@@ -2,9 +2,10 @@
 
 A small starter that shows how to build an SSH client for macOS and iOS/iPadOS on
 [OuterSSH](https://github.com/outergroup/OuterSSH). It connects to one SSH server and shows
-the server's homepage in a WKWebView. If the server has no homepage, it shows
-[Outer Shell](https://outershell.org). A port box opens `localhost:<port>` on the server, and
-a Home button goes back to the homepage.
+the server's [homepage](https://github.com/outergroup/OuterSSH/blob/main/OuterSSH/README.md#server-defined-homepage)
+in a WKWebView. Installing [Outer Shell](https://outershell.org) on a server makes it that
+server's homepage, on Linux, macOS, and Windows. A port box opens `localhost:<port>` on the
+server, and a Home button goes back to the homepage.
 
 Every web request goes through OuterSSH's HTTP proxy, which runs inside the app and forwards
 over SSH. WKWebView won't send `localhost` URLs to a proxy, so the app uses OuterSSH's special
@@ -20,18 +21,14 @@ paste it in to pin it.
 
 ## Server helpers
 
-OuterSSH uploads a small helper to the server to reach Unix sockets such as Outer Shell's.
-The app bundles whatever is in `helpers/`, which git ignores. Build the Linux helpers from the
-submodule with:
+OuterSSH uploads a small helper to the server when it first needs one, such as to open a Unix
+socket like Outer Shell's. A build phase runs `fetch_helpers.sh`, which downloads signed helpers
+for Linux, macOS, and Windows servers from outerssh.org into `helpers/` (git-ignored), checks
+each against `helpers.sha256`, and copies them into the app. The phase runs with script
+sandboxing off, since it downloads files and caches them in the source folder.
 
-```bash
-git submodule update --init
-OuterSSH/Scripts/build_outerssh_linux_helpers.sh helpers
-```
-
-The script needs Docker and a recent OuterSSH checkout. If the pinned submodule commit doesn't
-have it yet, update the submodule first. Without the helpers, everything except socket
-endpoints like Outer Shell still works.
+To use helpers you build yourself (see `OuterSSH/Release/README.md`), put them in `helpers/` and
+their hashes in `helpers.sha256`; the script only downloads files whose hash doesn't match.
 
 ## Building and running
 
@@ -54,10 +51,8 @@ to a server on your local network.
 
 ## Limitations
 
-- Opens Outer Shell only on Linux servers. The starter bundles only Linux helpers. macOS and
-  Windows servers need OuterSSH's server-side helper for Outer Shell's launchd socket or named
-  pipe, and so do `sudo` or root-owned sockets.
-- Supports `http+unix` and `http://localhost` homepages only.
+- Root-owned sockets need `sudo`, which the starter declines.
+- Supports `http+unix`, `http+pipe` and `http://localhost` homepages only.
 - No saved settings, tabs or bookmarks: edit the code.
 - No address bar, back or forward buttons.
 - WebKit sends `localhost` requests directly instead of through a proxy, so the app injects

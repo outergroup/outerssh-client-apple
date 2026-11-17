@@ -46,11 +46,6 @@
 			path = OuterSSHClient;
 			sourceTree = "<group>";
 		};
-		A50000000000000000000003 /* helpers */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = helpers;
-			sourceTree = "<group>";
-		};
 		A50000000000000000000002 /* OuterSSH */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = OuterSSH;
@@ -75,7 +70,6 @@
 			isa = PBXGroup;
 			children = (
 				A50000000000000000000001 /* OuterSSHClient */,
-				A50000000000000000000003 /* helpers */,
 				A50000000000000000000002 /* OuterSSH */,
 				A20000000000000000000003 /* LoopbackCompatibility.js */,
 				A80000000000000000000002 /* Products */,
@@ -101,6 +95,7 @@
 				AB0000000000000000000001 /* Sources */,
 				A60000000000000000000001 /* Frameworks */,
 				AB0000000000000000000002 /* Resources */,
+				AB0000000000000000000004 /* Bundle Server Helpers */,
 			);
 			buildRules = (
 			);
@@ -109,7 +104,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				A50000000000000000000001 /* OuterSSHClient */,
-				A50000000000000000000003 /* helpers */,
 			);
 			name = OuterSSHClient;
 			productName = OuterSSHClient;
@@ -182,6 +176,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AB0000000000000000000004 /* Bundle Server Helpers */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/helpers.sha256",
+			);
+			name = "Bundle Server Helpers";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/fetch_helpers.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AB0000000000000000000001 /* Sources */ = {
@@ -266,6 +283,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OuterSSHClient/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OuterSSH Client";
@@ -293,6 +311,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OuterSSHClient/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OuterSSH Client";

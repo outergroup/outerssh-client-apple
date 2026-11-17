@@ -7,6 +7,10 @@ enum ProxyAddress {
         encode(path, capacity: Int(OUTERSSH_PROXY_SOCKET_HOST_CAPACITY), outerssh_proxy_encode_unix_socket_host)
     }
 
+    static func namedPipeHost(_ path: String) -> String? {
+        encode(path, capacity: Int(OUTERSSH_PROXY_SOCKET_HOST_CAPACITY), outerssh_proxy_encode_named_pipe_host)
+    }
+
     static func tcpHost(_ host: String) -> String? {
         encode(host, capacity: Int(OUTERSSH_PROXY_TCP_HOST_CAPACITY), outerssh_proxy_encode_tcp_host)
     }
@@ -15,10 +19,15 @@ enum ProxyAddress {
         tcpHost("localhost").flatMap { URL(string: "http://\($0):\(port)/") }
     }
 
-    /// Supports http+unix://<percent-encoded socket path>/... and http://localhost[:port]/... homepages.
+    /// Supports http+unix://<percent-encoded socket path>/..., http+pipe://<percent-encoded pipe path>/...
+    /// and http://localhost[:port]/... homepages.
     static func url(forHomepage homepage: String) -> URL? {
         if let (authority, rest) = split(homepage, scheme: "http+unix") {
             guard let path = authority.removingPercentEncoding, let host = unixSocketHost(path) else { return nil }
+            return URL(string: "http://\(host)\(rest)")
+        }
+        if let (authority, rest) = split(homepage, scheme: "http+pipe") {
+            guard let path = authority.removingPercentEncoding, let host = namedPipeHost(path) else { return nil }
             return URL(string: "http://\(host)\(rest)")
         }
         if let (authority, rest) = split(homepage, scheme: "http") {

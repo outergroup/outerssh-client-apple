@@ -11,13 +11,8 @@ final class SSHBrowser {
     private(set) var status: String?
 
     private enum Tag: UInt64 {
-        case proxyStarted = 1, homepage, outerShell, destroyed
+        case proxyStarted = 1, homepage, destroyed
     }
-
-    private static let findOuterShellCommand = """
-        if [ "$(id -u)" = 0 ]; then d=/run; else d="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; fi; \
-        p="$d/org.outershell.OuterShell"; [ -S "$p" ] && printf '%s' "$p"
-        """
 
     @ObservationIgnored private let events = DispatchSource.makeUserDataOrSource(queue: .main)
     @ObservationIgnored private var eventQueue: OpaquePointer?
@@ -121,8 +116,6 @@ final class SSHBrowser {
             proxyStarted(event)
         case OUTERSSH_EVENT_HOMEPAGE_RECEIVED:
             homepageReceived(event)
-        case OUTERSSH_EVENT_COMMAND_COMPLETED:
-            outerShellSearchCompleted(event)
         case OUTERSSH_EVENT_HOST_KEY_VALIDATION:
             guard let pool = event.pool else { return }
             let question = event.host_key_validation
@@ -159,7 +152,8 @@ final class SSHBrowser {
     private func provideHelper(_ event: OuterSSHEvent) {
         guard let pool = event.pool else { return }
         let request = event.helper_binary_needed
-        let name = "outerssh-helper-\(Self.string(request.platform, request.platform_length)).gz"
+        let platform = Self.string(request.platform, request.platform_length)
+        let name = "outerssh-helper-\(platform).\(platform.hasPrefix("windows-") ? "tar.gz" : "gz")"
         let file = Bundle.main.resourceURL.map { open($0.appendingPathComponent(name).path, O_RDONLY | O_CLOEXEC) } ?? -1
         var info = stat()
         if file >= 0, fstat(file, &info) == 0 {
@@ -208,40 +202,12 @@ final class SSHBrowser {
             return
         }
         guard homepage.found else {
-            findOuterShell()
+            status = "This server has no homepage. Type a port to open one of its web servers."
             return
         }
         let homepageURL = Self.string(homepage.url, homepage.url_length)
         guard let url = ProxyAddress.url(forHomepage: homepageURL) else {
             status = "This starter doesn't support the homepage \(homepageURL)."
-            return
-        }
-        webView?.load(URLRequest(url: url))
-    }
-
-    private func findOuterShell() {
-        guard let pool else { return }
-        let command = Self.findOuterShellCommand
-        let submitted = command.withCString {
-            outerssh_session_pool_execute_command(pool, $0, strlen($0), nil, 0, Tag.outerShell.rawValue)
-        }
-        if !submitted {
-            status = "Couldn't look for Outer Shell."
-        }
-    }
-
-    private func outerShellSearchCompleted(_ event: OuterSSHEvent) {
-        let result = event.command_completed
-        guard result.error.domain == OUTERSSH_ERROR_NONE else {
-            status = Self.describe(result.error)
-            return
-        }
-        let path = String(decoding: UnsafeRawBufferPointer(
-            start: result.standard_output, count: result.standard_output_length), as: UTF8.self)
-        guard result.exit_status == 0, path.hasPrefix("/"), path.hasSuffix("/org.outershell.OuterShell"),
-              let host = ProxyAddress.unixSocketHost(path),
-              let url = URL(string: "http://\(host)/") else {
-            status = "Outer Shell isn't running on this server."
             return
         }
         webView?.load(URLRequest(url: url))
